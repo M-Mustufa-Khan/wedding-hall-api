@@ -15,9 +15,22 @@ builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
 // ========== ADD SERVICES ==========
 
-// 1. Database Connection — Railway sets DATABASE_URL; fallback to appsettings
-var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL")
+// 1. Database Connection — Railway sets DATABASE_URL as a URI; convert it for Npgsql
+var rawDb = Environment.GetEnvironmentVariable("DATABASE_URL")
     ?? builder.Configuration.GetConnectionString("DefaultConnection");
+
+string connectionString;
+if (rawDb != null && (rawDb.StartsWith("postgresql://") || rawDb.StartsWith("postgres://")))
+{
+    var uri = new Uri(rawDb);
+    var userInfo = uri.UserInfo.Split(':');
+    connectionString = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={userInfo[0]};Password={userInfo[1]};SSL Mode=Require;Trust Server Certificate=true";
+}
+else
+{
+    connectionString = rawDb ?? "";
+}
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
