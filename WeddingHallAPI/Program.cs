@@ -7,6 +7,9 @@ using System.Text;
 using WeddingHallAPI.Models;
 using WeddingHallAPI.Services;
 
+// Allow DateTime.Now (local) with PostgreSQL — avoids rewriting every timestamp in the app
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Listen on Railway's dynamic PORT, fall back to 8080 locally
